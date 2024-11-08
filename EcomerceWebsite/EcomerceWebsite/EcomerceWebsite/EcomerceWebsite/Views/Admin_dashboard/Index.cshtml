@@ -1,0 +1,571 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutPageAdmin.cshtml";
+}
+<style>
+    .shop__sidebar__size a.size_link {
+        color: #000;
+        padding: 8px 24px;
+    }
+
+    .shop__product__option__right a.sort_price:hover {
+        opacity: 0.6;
+    }
+
+    .shop__sidebar__size label.active a.size_link {
+        color: #ffffff;
+    }
+
+    .shop__sidebar__size label.label_size {
+        padding: 0;
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .shop__sidebar__color a.size_link_color {
+        width: 30px;
+        height: 30px;
+        display: block;
+        position: relative;
+        z-index: 999;
+    }
+
+    .shop__sidebar__price .btn_searchByPrice:hover {
+        opacity: 0.6;
+    }
+
+    .product-detail {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+    #download{
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: white;
+        color: red;
+
+        font-weight: 700;
+        transition: 0.3s;
+    }
+        #download:hover {
+            font-size: 18px;
+            color: white;
+            background-color: red;
+        }
+    #download2 {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: white;
+        color: #21b61f;
+        font-weight: 700;
+        transition: 0.3s;
+    }
+
+        #download2:hover {
+            background-color: #21b61f;
+            color: white;
+            font-size: 18px;
+        }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="../../css/style.css" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<h2 style="color:darkblue; margin-bottom: 25px; font-weight: 700">Trang chủ quản trị</h2>
+<div style="display: flex; margin-bottom: 10px;">
+    <button id="download">Xuất file PDF <i class="fas fa-file-pdf"></i></button>
+    <button id="download2">Xuất file EXCEL <i class="fas fa-file-excel"></i></button>
+</div>
+
+<div>
+    <div style="display: flex; justify-content:center;">
+        <div style="width:48% !important;">
+            <h5 style="font-weight:700;">Lượt mua theo ngày</h5>
+            <div style=" display: flex; justify-content: center;">
+                <canvas id="chartDonTheoNgay"></canvas>
+            </div>
+
+        </div>
+        <div style="width:48% !important; margin-left:2%;">
+            <h5 style="font-weight:700;">Lượt mua theo năm</h5>
+            <div style=" display: flex; justify-content: center;">
+                <canvas id="chartDonTheoNam"></canvas>
+            </div>
+
+        </div>
+    </div>
+    <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <div style="width:100% !important;">
+            <h5 style="font-weight:700; ">Lượt mua theo tháng</h5>
+            <div style=" display: flex; justify-content: center;">
+                <canvas id="chartDonTheoThang"></canvas>
+            </div>
+        </div>
+        @*<div style="width: 48% !important; margin-left: 2%; margin-top: 60px;">
+                <p style="font-weight: 700; color:darkslateblue; font-size: 18px;">Doanh thu tháng này: <span style="color:blueviolet; font-size: 22px; margin-left:10px">$@ViewBag.dtThang</span></p>
+                <p style="font-weight: 700; color:darkslateblue; font-size: 18px;">Doanh thu trong năm: <span style="color: blueviolet; font-size: 22px; margin-left: 10px ">$@ViewBag.dtNam</span></p>
+                <p style="font-weight: 700; color:darkslateblue; font-size: 18px;">Tổng doanh thu: <span style="color: blueviolet; font-size: 22px; margin-left: 10px ">$@ViewBag.tongdt</span></p>
+            </div>*@
+
+    </div>
+
+
+    <div style="display: flex; justify-content:center; margin-top:30px;">
+        <div style="width:48% !important;">
+            <h5 style="font-weight:700;">Doanh thu theo ngày</h5>
+            <div style=" display: flex; justify-content: center;">
+                <canvas id="chartDoanhThuTheoNgay"></canvas>
+            </div>
+
+        </div>
+        <div style="width:48% !important; margin-left:2%;">
+            <h5 style="font-weight:700;">Doanh thu theo năm</h5>
+            <div style=" display: flex; justify-content: center;">
+                <canvas id="chartDoanhThuTheoNam"></canvas>
+            </div>
+
+        </div>
+    </div>
+
+    <div style=" margin-top: 30px;">
+        <h5 style="font-weight:700; ">Doanh Thu theo tháng</h5>
+        <div style=" display: flex; justify-content: center;">
+            <canvas id="chartDoanhThuTheoThang"></canvas>
+        </div>
+    </div>
+
+    <div style=" margin-top: 30px;">
+        <h5 style="font-weight:700;margin-bottom:30px; ">Sản phẩm bán chạy</h5>
+
+        <div class="row">
+            @foreach (var item2 in Model.spBanChay)
+            {
+                <div class="col-lg-3 col-md-6 col-sm-6 col-sm-6">
+                    <div class="product__item">
+                        <div class="product__item__pic set-bg" style="border: 0.5px solid #efefef; background: url( @item2.image); background-size:cover; background-repeat:no-repeat; background-position:center; box-shadow:rgb(131 129 129 / 30%) 10px 10px 35px ; ">
+                            <a href="/Admin_Products/edit/@item2.product_id" class="product-detail"></a>
+                        </div>
+                        <div class="product__item__text">
+                            <h6>@item2.name</h6>
+                            <div class="rating">
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                            </div>
+                            <h5>@item2.price$</h5>
+                            <div class="product__color__select">
+                                <label for="pc-4">
+                                    <input type="radio" id="pc-4">
+                                </label>
+                                <label class="active black" for="pc-5">
+                                    <input type="radio" id="pc-5">
+                                </label>
+                                <label class="grey" for="pc-6">
+                                    <input type="radio" id="pc-6">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <h5 style="font-weight: 700; margin-bottom: 30px; ">Sản phẩm Không bán được</h5>
+        <div class="row">
+            @foreach (var item in Model.spKhongBanDuoc)
+            {
+                <div class="col-lg-3 col-md-6 col-sm-6 col-sm-6">
+                    <div class="product__item">
+                        <div class="product__item__pic set-bg" style="border: 0.5px solid #efefef; background: url( @item.image); background-size:cover; background-repeat:no-repeat; background-position:center; box-shadow:rgb(131 129 129 / 30%) 10px 10px 35px ; ">
+                            <a href="/Admin_Products/edit/@item.product_id" class="product-detail"></a>
+                        </div>
+                        <div class="product__item__text">
+                            <h6>@item.name</h6>
+
+                            <div class="rating">
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                            </div>
+                            <h5>@item.price$</h5>
+                            <div class="product__color__select">
+                                <label for="pc-4">
+                                    <input type="radio" id="pc-4">
+                                </label>
+                                <label class="active black" for="pc-5">
+                                    <input type="radio" id="pc-5">
+                                </label>
+                                <label class="grey" for="pc-6">
+                                    <input type="radio" id="pc-6">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+    </div>
+
+
+    <script>
+    const ctx = document.getElementById('chartDonTheoThang');
+    const ctx2 = document.getElementById('chartDonTheoNgay');
+    const ctx3 = document.getElementById('chartDonTheoNam');
+
+    const ctx5 = document.getElementById('chartDoanhThuTheoThang');
+    const ctx4 = document.getElementById('chartDoanhThuTheoNgay');
+    const ctx6 = document.getElementById('chartDoanhThuTheoNam');
+
+     var chartNgay1 =   new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: [
+                @{
+                    List<string> recentDates = new List<string>();
+                    for (int i = 6; i >= 0; i--) // Bắt đầu từ ngày hiện tại và lặp lại 7 ngày trước đó
+                    {
+                        DateTime date = DateTime.Today.AddDays(-i);
+                        recentDates.Add(date.ToString("dd/MM/yyyy"));
+                    }
+
+                 }
+                    @foreach (var day in recentDates)
+                {
+                    @Html.Raw("'" + day + "',")
+                }
+
+                ],
+                datasets: [
+                    {
+
+                        label: 'Lượt mua',
+                        data: [
+                            @for(int i = 7; i > 0; i--)
+                            {
+                                 @Html.Raw(Model.ngay[i - 1].SoLuongDonHang + ",")
+                            }
+                             @*@foreach (var oj in Model.ngay)
+                             {
+                                 @Html.Raw(oj.SoLuongDonHang + ",")
+                             }*@
+                        ],
+                        borderWidth: 1,
+                    },
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var chartThang1 = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [
+                'Tháng 1',
+                'Tháng 2',
+                'Tháng 3',
+                'Tháng 4',
+                'Tháng 5',
+                'Tháng 6',
+                'Tháng 7',
+                'Tháng 8',
+                'Tháng 9',
+                'Tháng 10',
+                'Tháng 11',
+                'Tháng 12',
+            ],
+            datasets: [
+                {
+                    label: 'Lượt mua',
+                    data: [
+                         @foreach (var oj in Model.thang)
+                         {
+                             @Html.Raw(oj.SoLuongDonHang + ",")
+                         }
+                     ],
+                    borderWidth: 1
+                },
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+        var chartNam1 = new Chart(ctx3, {
+        type: 'line',
+        data: {
+            labels: [
+                @{
+                    List<int> recentYears = new List<int>();
+                    for (int i = 3; i >= 0; i--)
+                    {
+                        int date = DateTime.Today.Year - i;
+                        recentYears.Add(date);
+                    }
+
+                  }
+                @foreach (var day in recentYears)
+                 {
+                     @Html.Raw("'" + day.ToString() + "',")
+                 }
+            ],
+            datasets: [
+                {
+                    label: 'Lượt mua',
+                    data: [
+                    @foreach (var oj in Model.nam)
+                    {
+                        @Html.Raw(oj.SoLuongDonHang + ",")
+                    }
+                    ],
+                    borderWidth: 1
+                },
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+        var chartNgay2 = new Chart(ctx4, {
+     type: 'bar',
+     data:
+     {
+             labels: [
+              @{
+                 List<string> recentData = new List<string>();
+                 for (int i = 6; i >= 0; i--) // Bắt đầu từ ngày hiện tại và lặp lại 7 ngày trước đó
+                 {
+                     DateTime date = DateTime.Today.AddDays(-i);
+                     recentData.Add(date.ToString("dd/MM/yyyy"));
+                 }
+
+              }
+                 @foreach (var day in recentData)
+                 {
+                     @Html.Raw("'" + day + "',")
+                 }
+
+             ],
+             datasets: [
+                 {
+
+                     label: 'Doanh Thu',
+                     data: [
+                         @for (int i = 6; i >= 0; i--)
+                         {
+
+                             if ( Model.ngay[i].DoanhThu.Length > 3)
+                             {
+                                 @Html.Raw(Model.ngay[i].DoanhThu.Substring(0, Model.ngay[i].DoanhThu.Length - 3) + ",")
+                             }
+                             else
+                            {
+                                  @Html.Raw("0,");
+                            }
+                         }
+/*                        9, 8, 7, 6*/
+                     ],
+                     borderWidth: 1,
+                 },
+             ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+     });
+
+        var chartThang2 = new Chart(ctx5, {
+     type: 'line',
+     data: {
+         labels: [
+             'Tháng 1',
+             'Tháng 2',
+             'Tháng 3',
+             'Tháng 4',
+             'Tháng 5',
+             'Tháng 6',
+             'Tháng 7',
+             'Tháng 8',
+             'Tháng 9',
+             'Tháng 10',
+             'Tháng 11',
+             'Tháng 12',
+         ],
+         datasets: [
+             {
+                 label: 'Doanh Thu',
+                 data: [
+                      @foreach (var oj in Model.thang)
+                      {
+                          @Html.Raw(oj.DoanhThu + ",")
+
+                      }
+                  ],
+                 borderWidth: 1
+             },
+         ]
+     },
+     options: {
+         scales: {
+             y: {
+                 beginAtZero: true
+             }
+         }
+     }
+ });
+
+        var chartNam2 = new Chart(ctx6, {
+     type: 'line',
+     data: {
+         labels: [
+             @{
+                 List<int> recentData3 = new List<int>();
+                 for (int i = 3; i >= 0; i--)
+                 {
+                     int date = DateTime.Today.Year - i;
+                     recentData3.Add(date);
+                 }
+
+               }
+             @foreach (var day in recentData3)
+              {
+                  @Html.Raw("'" + day.ToString() + "',")
+              }
+         ],
+         datasets: [
+             {
+                 label: 'Doanh Thu',
+                 data: [
+                 @foreach (var oj in Model.nam)
+                 {
+                     @Html.Raw(oj.DoanhThu + ",")
+                 }
+                 ],
+                 borderWidth: 1
+             },
+         ]
+     },
+     options: {
+         scales: {
+             y: {
+                 beginAtZero: true
+             }
+         }
+     }
+     });
+
+        document.getElementById('download').addEventListener('click', function () {
+            var chart1Image = document.getElementById("chartDonTheoNgay").toDataURL("image/png");
+            var chart2Image = document.getElementById("chartDonTheoThang").toDataURL("image/png");
+            var chart3Image = document.getElementById("chartDonTheoNam").toDataURL("image/png");
+            var chart4Image = document.getElementById("chartDoanhThuTheoNgay").toDataURL("image/png");
+            var chart5Image = document.getElementById("chartDoanhThuTheoThang").toDataURL("image/png");
+            var chart6Image = document.getElementById("chartDoanhThuTheoNam").toDataURL("image/png");
+
+            const { jsPDF } = window.jspdf;
+            var pdf = new jsPDF();
+            pdf.setFontSize(18);
+            pdf.text("Orders by day", 10, 10);
+            pdf.addImage(chart1Image, 'PNG', 10, 10, 180, 100);
+            pdf.addPage();
+            pdf.text("Orders by month", 10, 10);
+            pdf.addImage(chart2Image, 'PNG', 10, 10, 180, 100);
+            pdf.addPage();
+            pdf.text("Orders by year", 10, 10);
+            pdf.addImage(chart3Image, 'PNG', 10, 10, 180, 100);
+            pdf.addPage();
+            pdf.text("Revenue by day", 10, 10);
+            pdf.addImage(chart4Image, 'PNG', 10, 10, 180, 100);
+            pdf.addPage();
+            pdf.text("Revenue by month", 10, 10);
+            pdf.addImage(chart5Image, 'PNG', 10, 10, 180, 100);
+            pdf.addPage();
+            pdf.text("Revenue by year", 10, 10);
+            pdf.addImage(chart6Image, 'PNG', 10, 10, 180, 100);
+
+            pdf.save('ThongKe.pdf');
+        });
+
+
+
+
+        document.getElementById('download2').addEventListener('click', function () {
+            // Tạo workbook mới
+            var wb = XLSX.utils.book_new();
+
+            // Tạo worksheet từ dữ liệu biểu đồ 1
+            var ws1_data = [
+                ["Ngày", "Lượt mua"],
+                ...chartNgay1.data.labels.map((label, index) => [label, chartNgay1.data.datasets[0].data[index]])
+            ];
+            var ws1 = XLSX.utils.aoa_to_sheet(ws1_data);
+            XLSX.utils.book_append_sheet(wb, ws1, "Đơn hàng theo ngày");
+
+            // Tạo worksheet từ dữ liệu biểu đồ 2
+            var ws2_data = [
+                ["Tháng", "Lượt mua"],
+                ...chartThang1.data.labels.map((label, index) => [label, chartThang1.data.datasets[0].data[index]])
+            ];
+            var ws2 = XLSX.utils.aoa_to_sheet(ws2_data);
+            XLSX.utils.book_append_sheet(wb, ws2, "Đơn hàng theo tháng");
+
+            // Tạo worksheet từ dữ liệu biểu đồ 3
+            var ws3_data = [
+                ["Năm", "Lượt mua"],
+                ...chartNam1.data.labels.map((label, index) => [label, chartNam1.data.datasets[0].data[index]])
+            ];
+            var ws3 = XLSX.utils.aoa_to_sheet(ws3_data);
+            XLSX.utils.book_append_sheet(wb, ws3, "Đơn hàng theo năm");
+
+            var ws4_data = [
+                ["Ngày", "Doanh thu"],
+                ...chartNgay2.data.labels.map((label, index) => [label, chartNgay2.data.datasets[0].data[index]])
+            ];
+            var ws4 = XLSX.utils.aoa_to_sheet(ws4_data);
+            XLSX.utils.book_append_sheet(wb, ws4, "Doanh thu theo ngày");
+
+            var ws5_data = [
+                ["Tháng", "Doanh thu"],
+                ...chartThang2.data.labels.map((label, index) => [label, chartThang2.data.datasets[0].data[index]])
+            ];
+            var ws5 = XLSX.utils.aoa_to_sheet(ws5_data);
+            XLSX.utils.book_append_sheet(wb, ws5, "Doanh thu theo tháng");
+
+            var ws6_data = [
+                ["Năm", "Doanh thu"],
+                ...chartNam2.data.labels.map((label, index) => [label, chartNam2.data.datasets[0].data[index]])
+            ];
+            var ws6 = XLSX.utils.aoa_to_sheet(ws6_data);
+            XLSX.utils.book_append_sheet(wb, ws6, "Doanh thu theo năm");
+            // Xuất file Excel
+            XLSX.writeFile(wb, 'ThongKe.xlsx');
+        });
+    </script>
+

@@ -1,0 +1,168 @@
+﻿@model EcomerceWebsite.Models.Order
+
+@{
+    ViewBag.Title = "Chi tiết đơn hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Message"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+<style>
+    .product_color {
+        text-align: center;
+    }
+
+        .product_color label {
+            height: 30px;
+            width: 30px;
+            border-radius: 50%;
+            position: relative;
+            margin-right: 10px;
+            margin-bottom: 0;
+            display: inline-block;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #e5dcdc;
+        }
+    label input {
+        display: none;
+    }
+
+    td label.c-3 {
+        background: #e8bac4;
+    }
+
+    td label.c-2 {
+        background: #ffff;
+    }
+
+    td label.c-4 {
+        background: red;
+    }
+
+    td label.c-1 {
+        background: #0b090c;
+    }
+
+    td label.c-6 {
+        background: #e5ddd2;
+    }
+
+    td label.c-5 {
+        background: #6c827a;
+    }
+
+    td label.c-7 {
+        background: #636068;
+    }
+
+</style>
+<div class="container mt-4">
+    <h2 class="text-center">Chi tiết đơn hàng</h2>
+    <h4 class="mt-4">Đơn hàng</h4>
+    <div>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-3">
+                Mã order
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.order_id)
+            </dd>
+
+            <dt class="col-sm-3">
+                Phương thức thanh toán
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Payment.payment_method)
+            </dd>
+
+            <dt class="col-sm-3">
+                Địa chỉ giao hàng
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.shipment.address)
+            </dd>
+
+            <dt class="col-sm-3">
+                Tổng giá
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.total_price)
+            </dd>
+
+            <dt class="col-sm-3">
+                Ngày tạo
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.ngayTao)
+            </dd>
+            <dt class="col-sm-3">
+                Trạng thái
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.shipment.state)
+            </dd>
+        </dl>
+    </div>
+
+    <h4 class="mt-4">Mặt hàng</h4>
+    <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>Tên sản phẩm</th>
+                <th>Màu sắc</th>
+                <th>Kích cỡ</th>
+                <th>Số lượng</th>
+                <th>Đơn giá</th>
+                <th>Tổng giá</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.order_item)
+            {
+                <tr>
+                    <td>@item.Product.name</td>
+                    <td class="product_color" style="width: 100px">
+                        <label class="c-@item.Product.color" for="sp-@item.Product.color">
+                            <input type="radio" id="sp-@item.Product.color" name="color" value="@item.Product.color">
+                        </label>
+                    </td>
+                    <td>@item.Product.size</td>
+                    <td>@item.quantity</td>
+                    <td>@String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", item.price)</td>
+                    <td>@String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", item.quantity * item.price)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div>
+        @if (Model.shipment.state == "Chờ xác nhận")
+        {
+            using (Html.BeginForm("Cancel", "Client_DanhSachOrders", new { id = Model.order_id }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">Hủy</button>
+            }
+        }
+        else if (Model.shipment.state != "Đã hủy")
+        {
+            <p>Đơn hàng không thể hủy được.</p>
+        }
+    </div>
+
+    <p class="mt-4">
+        @Html.ActionLink("Trở lại danh sách", "Index", null, new { @class = "btn btn-primary" })
+    </p>
+</div>
